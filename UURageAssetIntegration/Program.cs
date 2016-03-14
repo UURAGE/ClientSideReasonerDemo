@@ -35,8 +35,9 @@ namespace UURageAssetIntegration
                 RedirectStandardOutput = true,
                 UseShellExecute = false
             };
+            string input = Uri.EscapeDataString(Encoding.GetEncoding(28591).GetString(Encoding.UTF8.GetBytes(param.ToString())));
             startInfo.EnvironmentVariables.Add("REQUEST_METHOD", "GET");
-            startInfo.EnvironmentVariables.Add("QUERY_STRING", "input=" + Uri.EscapeDataString(Encoding.GetEncoding(28591).GetString(Encoding.UTF8.GetBytes(param.ToString()))));
+            startInfo.EnvironmentVariables.Add("QUERY_STRING", "input=" + input);
             using (Process srProcess = Process.Start(startInfo))
             {
                 string output = Encoding.UTF8.GetString(Encoding.GetEncoding(28591).GetBytes(new StreamReader(srProcess.StandardOutput.BaseStream, Encoding.UTF8).ReadToEnd()));
@@ -49,7 +50,7 @@ namespace UURageAssetIntegration
             }
         }
 
-        static bool PerformParserRequest(string scenarioName)
+        static string PerformParserRequest(string scenarioName)
         {
             // Relative to the cgi
             string scenarioBinPath = Path.Combine("bins", scenarioName + ".bin");
@@ -65,14 +66,14 @@ namespace UURageAssetIntegration
 
             startInfo.EnvironmentVariables.Add("REQUEST_METHOD", "GET");
 
-            string query = "script_path=" + scenarioXMLPath + "&" + "bin_path=" + scenarioBinPath;
+            string query = Uri.EscapeDataString(Encoding.GetEncoding(28591).GetString(Encoding.UTF8.GetBytes("script_path=" + scenarioXMLPath + "&" + "bin_path=" + scenarioBinPath)));
             startInfo.EnvironmentVariables.Add("QUERY_STRING", query);
 
             using (Process spProcess = Process.Start(startInfo))
             {
                 string output = new StreamReader(spProcess.StandardOutput.BaseStream).ReadToEnd();
 
-                return output.Contains(scenarioBinPath);
+                return output;
             }
         }
 
@@ -138,15 +139,21 @@ namespace UURageAssetIntegration
             string scenarioName = "";
             bool loaded = false;
 
+            Console.InputEncoding = Encoding.Unicode;
+
             if (args.Length == 0)
             {
                 Console.WriteLine("Please specify the name of the scenario");
                 scenarioName = Console.ReadLine();
-                scenarioID = "scenarios." + scenarioName;
                 Console.WriteLine();
 
                 Console.WriteLine("Loading scenario...");
-                loaded = PerformParserRequest(scenarioName);
+                string output = PerformParserRequest(scenarioName);
+                loaded = output.Contains(".bin");
+                int idStartIndex = output.IndexOf("bins\\") + 5;
+                int idEndIndex = output.IndexOf(".bin");
+
+                scenarioID = output.Substring(idStartIndex, idEndIndex - idStartIndex);
 
                 if (loaded)
                     Console.WriteLine("Scenario successfully loaded");
@@ -168,8 +175,8 @@ namespace UURageAssetIntegration
 
                 if (answer == "yes" || answer == "y")
                 {
-                    string initialDetails =
-                        ((JValue)((JArray)PerformReasonerRequest("examples", new JArray((object)new JArray(scenarioID)))[0])[1]).Value.ToString();
+                    JArray paramsID = new JArray((object)new JArray(scenarioID));
+                    string initialDetails = ((JValue)((JArray)PerformReasonerRequest("examples", paramsID)[0])[1]).Value.ToString();
                     DoStep(scenarioID, new JArray(scenarioID, (new JArray()).ToString(), initialDetails, new JObject()));
                     Console.ReadLine();
                 }
