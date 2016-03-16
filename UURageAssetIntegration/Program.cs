@@ -66,7 +66,7 @@ namespace UURageAssetIntegration
 
             startInfo.EnvironmentVariables.Add("REQUEST_METHOD", "GET");
 
-            string query = Uri.EscapeDataString(Encoding.GetEncoding(28591).GetString(Encoding.UTF8.GetBytes("script_path=" + scenarioXMLPath + "&" + "bin_path=" + scenarioBinPath)));
+            string query = "script_path=" + Uri.EscapeDataString(Encoding.GetEncoding(28591).GetString(Encoding.UTF8.GetBytes(scenarioXMLPath))) + "&" + "bin_path=" + Uri.EscapeDataString(Encoding.GetEncoding(28591).GetString(Encoding.UTF8.GetBytes(scenarioBinPath)));
             startInfo.EnvironmentVariables.Add("QUERY_STRING", query);
 
             using (Process spProcess = Process.Start(startInfo))
@@ -138,9 +138,7 @@ namespace UURageAssetIntegration
             string scenarioID = "";
             string scenarioName = "";
             bool loaded = false;
-
-            Console.InputEncoding = Encoding.Unicode;
-
+            
             if (args.Length == 0)
             {
                 Console.WriteLine("Please specify the name of the scenario");
