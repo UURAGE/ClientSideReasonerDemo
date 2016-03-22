@@ -123,12 +123,36 @@ namespace UURageAssetIntegration
                     DoStep(scenarioID, (JArray)((JArray)nextSteps[choice - 1])[3]);
                 }
                 else
-                {
-                    JArray nextState = (JArray)((JArray)nextSteps[0])[3];
-                    string nextDetails = ((JValue)nextState[2]).Value.ToString();
-                    string nextText = ((JValue)(((JObject)JObject.Parse(nextDetails)["statement"])["text"])).Value.ToString();
-                    Console.WriteLine(HttpUtility.HtmlDecode(nextText));
-                    DoStep(scenarioID, nextState);
+                {                    
+                    int optionCounter = 0;
+                    JArray nextState = null;
+                    string nextDetails = null;
+                    string nextText = null;
+
+                    foreach (JToken nextStep in nextSteps)
+                    {
+                        nextState = (JArray)((JArray)nextStep)[3];
+                        nextDetails = ((JValue)nextState[2]).Value.ToString();
+                        nextText = ((JValue)(((JObject)JObject.Parse(nextDetails)["statement"])["text"])).Value.ToString();
+                        Console.WriteLine(HttpUtility.HtmlDecode(nextText));
+                        optionCounter++;
+                    }
+                    /* If there are multiple computer statements, i.e. more options for the counter, we randomly select one; 
+                     * else we select the only option available.
+                     * This section will be the integration part with INESC emotion detection asset
+                     */ 
+                    if (optionCounter > 1)
+                    {
+                        Random rnd = new Random();
+                        Console.WriteLine("\nThe virtual character/computer has the above choices.");
+                        int choice = rnd.Next(0, optionCounter);
+                        Console.WriteLine("We randomly select: " + (choice + 1).ToString());
+                        DoStep(scenarioID, (JArray)((JArray)nextSteps[choice])[3]);
+                    }
+                    else
+                    {
+                        DoStep(scenarioID, (JArray)((JArray)nextSteps[0])[3]);
+                    }
                 }
             }
         }
