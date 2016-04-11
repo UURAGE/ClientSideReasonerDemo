@@ -35,12 +35,12 @@ namespace UURageAssetIntegration
                 RedirectStandardOutput = true,
                 UseShellExecute = false
             };
-            string input = Uri.EscapeDataString(Encoding.GetEncoding(28591).GetString(Encoding.UTF8.GetBytes(param.ToString())));
+            string input = Uri.EscapeDataString(param.ToString());
             startInfo.EnvironmentVariables.Add("REQUEST_METHOD", "GET");
             startInfo.EnvironmentVariables.Add("QUERY_STRING", "input=" + input);
             using (Process srProcess = Process.Start(startInfo))
             {
-                string output = Encoding.UTF8.GetString(Encoding.GetEncoding(28591).GetBytes(new StreamReader(srProcess.StandardOutput.BaseStream, Encoding.UTF8).ReadToEnd()));
+                string output = new StreamReader(srProcess.StandardOutput.BaseStream).ReadToEnd();
                 JObject response = JObject.Parse(output.Split(new string[] { "\r\n\r\n" }, 2, StringSplitOptions.None)[1]);
                 if (response["error"].Type != JTokenType.Null)
                 {
@@ -66,7 +66,7 @@ namespace UURageAssetIntegration
 
             startInfo.EnvironmentVariables.Add("REQUEST_METHOD", "GET");
 
-            string query = "script_path=" + Uri.EscapeDataString(Encoding.GetEncoding(28591).GetString(Encoding.UTF8.GetBytes(scenarioXMLPath))) + "&" + "bin_path=" + Uri.EscapeDataString(Encoding.GetEncoding(28591).GetString(Encoding.UTF8.GetBytes(scenarioBinPath)));
+            string query = "script_path=" + Uri.EscapeDataString(scenarioXMLPath) + "&" + "bin_path=" + Uri.EscapeDataString(scenarioBinPath);
             startInfo.EnvironmentVariables.Add("QUERY_STRING", query);
 
             using (Process spProcess = Process.Start(startInfo))
@@ -159,6 +159,9 @@ namespace UURageAssetIntegration
 
         static void Main(string[] args)
         {
+            Console.InputEncoding = Encoding.Unicode;
+            Console.OutputEncoding = Encoding.Unicode;
+
             string scenarioID = "";
             string scenarioName = "";
             bool loaded = false;
