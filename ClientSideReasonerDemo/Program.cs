@@ -49,7 +49,7 @@ namespace UURAGE
 
         static string PerformParserRequest(string scenarioName)
         {
-            // Relative to the cgi
+            // This directory is relative to the cgi
             string scenarioBinPath = Path.Combine(binDirectory, scenarioName + ".bin");
             string scenarioXMLPath = Path.Combine(xmlDirectory, scenarioName + ".xml");
 
@@ -191,7 +191,7 @@ namespace UURAGE
                 string answer = Console.ReadLine();
                 Console.WriteLine();
 
-                if (answer == "yes" || answer == "y")
+                if (answer == "Yes" || answer == "Y" || answer == "yes" || answer == "y")
                 {
                     JArray paramsID = new JArray((object)new JArray(scenarioID));
                     string initialDetails = ((JValue)((JArray)PerformReasonerRequest("examples", paramsID)[0])[1]).Value.ToString();
