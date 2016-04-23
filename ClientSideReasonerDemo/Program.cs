@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 using System.Web;
 using Newtonsoft.Json.Linq;
 
-namespace UURageAssetIntegration
+namespace UURAGE
 {
     class Program
     {        
@@ -77,83 +77,76 @@ namespace UURageAssetIntegration
             }
         }
 
-        static void DoStep(string scenarioID, JArray state)
+        static JArray DoStep(string scenarioID, JArray nextSteps)
         {
-            // Call to the allfirsts service of the ScenarioReasoner
-            JArray nextSteps = (JArray)PerformReasonerRequest("scenarios.allfirsts", new JArray((object)state));
-            if (nextSteps.Count == 0)
+            string firstNextDetails = ((JValue)((JArray)((JArray)nextSteps[0])[3])[2]).Value.ToString();
+            string firstNextType = ((JValue)(((JObject)JObject.Parse(firstNextDetails)["statement"])["type"])).Value.ToString();
+            if (firstNextType == "player")
             {
-                Console.WriteLine("Scenario ended!");
-            }
-            else
-            {
-                string firstNextDetails = ((JValue)((JArray)((JArray)nextSteps[0])[3])[2]).Value.ToString();
-                string firstNextType = ((JValue)(((JObject)JObject.Parse(firstNextDetails)["statement"])["type"])).Value.ToString();
-                if (firstNextType == "player")
-                {
-                    Console.WriteLine("Choose the step that you want to take by giving the appropriate number");
+                Console.WriteLine("Choose the step that you want to take by giving the appropriate number");
 
-                    int optionCounter = 1;
-                    foreach (JToken nextStep in nextSteps)
-                    {
-                        JArray nextState = (JArray)((JArray)nextStep)[3];
-                        string nextDetails = ((JValue)nextState[2]).Value.ToString();
-                        string nextText = ((JValue)(((JObject)JObject.Parse(nextDetails)["statement"])["text"])).Value.ToString();
-                        Console.WriteLine(optionCounter.ToString() + ". " + HttpUtility.HtmlDecode(nextText));
-                        optionCounter++;
-                    }
+                int optionCounter = 1;
+                foreach (JToken nextStep in nextSteps)
+                {
+                    JArray nextState = (JArray)((JArray)nextStep)[3];
+                    string nextDetails = ((JValue)nextState[2]).Value.ToString();
+                    string nextText = ((JValue)(((JObject)JObject.Parse(nextDetails)["statement"])["text"])).Value.ToString();
+                    bool endOfScenario = (bool)((JValue)(((JObject)JObject.Parse(nextDetails)["statement"])["end"])).Value;
+                    Console.WriteLine(optionCounter.ToString() + ". " + HttpUtility.HtmlDecode(nextText));
+                    optionCounter++;
+                }
+
+                Console.WriteLine();
+
+                bool validChoice = false;
+                int choice = -1;
+                while (!validChoice)
+                {
+                    if (!int.TryParse(Console.ReadLine(), out choice))
+                        Console.WriteLine("Your choice is not a number");
+                    else if (choice - 1 < 0 || choice - 1 >= nextSteps.Count)
+                        Console.WriteLine("Your choice is out of the range of possible steps");
+                    else
+                        validChoice = true;
 
                     Console.WriteLine();
-
-                    bool validChoice = false;
-                    int choice = -1;
-                    while (!validChoice)
-                    {
-                        if (!int.TryParse(Console.ReadLine(), out choice))
-                            Console.WriteLine("Your choice is not a number");
-                        else if (choice - 1 < 0 || choice - 1 >= nextSteps.Count)
-                            Console.WriteLine("Your choice is out of the range of possible steps");
-                        else
-                            validChoice = true;
-
-                        Console.WriteLine();
-                        if (!validChoice)
-                            Console.WriteLine("Please choose again");
-                    }
+                    if (!validChoice)
+                        Console.WriteLine("Please choose again");
+                }
                     
-                    DoStep(scenarioID, (JArray)((JArray)nextSteps[choice - 1])[3]);
+                return (JArray)((JArray)nextSteps[choice - 1])[3];
+            }
+            else
+            {                    
+                int optionCounter = 0;
+                JArray nextState = null;
+                string nextDetails = null;
+                string nextText = null;
+
+                foreach (JToken nextStep in nextSteps)
+                {
+                    nextState = (JArray)((JArray)nextStep)[3];
+                    nextDetails = ((JValue)nextState[2]).Value.ToString();
+                    nextText = ((JValue)(((JObject)JObject.Parse(nextDetails)["statement"])["text"])).Value.ToString();
+                    bool endOfScenario = (bool)((JValue)(((JObject)JObject.Parse(nextDetails)["statement"])["end"])).Value;
+                    Console.WriteLine(HttpUtility.HtmlDecode(nextText));
+                    optionCounter++;
+                }
+                /* If there are multiple computer statements, i.e. more options for the counter, we randomly select one; 
+                    * else we select the only option available.
+                    * This section will be the integration part with INESC emotion detection asset
+                    */ 
+                if (optionCounter > 1)
+                {
+                    Random rnd = new Random();
+                    Console.WriteLine("\nThe virtual character/computer has the above choices.");
+                    int choice = rnd.Next(0, optionCounter);
+                    Console.WriteLine("We randomly select: " + (choice + 1).ToString());
+                    return (JArray)((JArray)nextSteps[choice])[3];
                 }
                 else
-                {                    
-                    int optionCounter = 0;
-                    JArray nextState = null;
-                    string nextDetails = null;
-                    string nextText = null;
-
-                    foreach (JToken nextStep in nextSteps)
-                    {
-                        nextState = (JArray)((JArray)nextStep)[3];
-                        nextDetails = ((JValue)nextState[2]).Value.ToString();
-                        nextText = ((JValue)(((JObject)JObject.Parse(nextDetails)["statement"])["text"])).Value.ToString();
-                        Console.WriteLine(HttpUtility.HtmlDecode(nextText));
-                        optionCounter++;
-                    }
-                    /* If there are multiple computer statements, i.e. more options for the counter, we randomly select one; 
-                     * else we select the only option available.
-                     * This section will be the integration part with INESC emotion detection asset
-                     */ 
-                    if (optionCounter > 1)
-                    {
-                        Random rnd = new Random();
-                        Console.WriteLine("\nThe virtual character/computer has the above choices.");
-                        int choice = rnd.Next(0, optionCounter);
-                        Console.WriteLine("We randomly select: " + (choice + 1).ToString());
-                        DoStep(scenarioID, (JArray)((JArray)nextSteps[choice])[3]);
-                    }
-                    else
-                    {
-                        DoStep(scenarioID, (JArray)((JArray)nextSteps[0])[3]);
-                    }
+                {
+                    return (JArray)((JArray)nextSteps[0])[3];
                 }
             }
         }
@@ -179,10 +172,12 @@ namespace UURageAssetIntegration
                 int idStartIndex = output.IndexOf("bins\\") + 5;
                 int idEndIndex = output.IndexOf(".bin");
 
-                scenarioID = output.Substring(idStartIndex, idEndIndex - idStartIndex);
 
                 if (loaded)
+                {
+                    scenarioID = output.Substring(idStartIndex, idEndIndex - idStartIndex);
                     Console.WriteLine("Scenario successfully loaded");
+                }
                 else
                     Console.WriteLine("Failed to load scenario");
 
@@ -203,12 +198,27 @@ namespace UURageAssetIntegration
                 {
                     JArray paramsID = new JArray((object)new JArray(scenarioID));
                     string initialDetails = ((JValue)((JArray)PerformReasonerRequest("examples", paramsID)[0])[1]).Value.ToString();
-                    DoStep(scenarioID, new JArray(scenarioID, (new JArray()).ToString(), initialDetails, new JObject()));
-                    Console.ReadLine();
+                    JArray nextState = new JArray(scenarioID, (new JArray()).ToString(), initialDetails, new JObject());
+
+                    while (true)
+                    {
+                        // Call to the allfirsts service of the ScenarioReasoner
+                        JArray nextSteps = (JArray)PerformReasonerRequest("scenarios.allfirsts", new JArray((object)nextState));
+                        if (nextSteps.Count == 0)
+                        {
+                            Console.WriteLine("Scenario ended!");
+                            break;
+                        }
+                        else
+                        {
+                            nextState = DoStep(scenarioID, nextSteps);
+                        }
+                    }
                 }
             }
-            else
-                Console.ReadLine();
+
+            Console.WriteLine("Press any key to close this console...");
+            Console.ReadLine();
         }
     }
 }
