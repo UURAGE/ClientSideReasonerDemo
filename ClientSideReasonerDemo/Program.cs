@@ -12,15 +12,15 @@ using Newtonsoft.Json.Linq;
 namespace UURageAssetIntegration
 {
     class Program
-    {
-        
+    {        
         static readonly string scenarioReasonerFileName = "ScenarioReasoner.cgi";
         static readonly string scenarioParserFileName = "ScenarioParser.cgi";
+        static readonly string binDirectory = "bins";
 
         // Relative to the .exe in bin
-        static readonly string cgiDirectory = ConfigurationManager.AppSettings["cgidir"];
+        static readonly string cgiDirectory = ConfigurationManager.AppSettings["cgi_directory"];
         // Relative to the cgi directory
-        static readonly string scenarioDirectory = ConfigurationManager.AppSettings["scenariodir"];
+        static readonly string xmlDirectory = ConfigurationManager.AppSettings["xml_directory"];
 
         static JToken PerformReasonerRequest(string method, JArray parameters)
         {
@@ -53,8 +53,8 @@ namespace UURageAssetIntegration
         static string PerformParserRequest(string scenarioName)
         {
             // Relative to the cgi
-            string scenarioBinPath = Path.Combine("bins", scenarioName + ".bin");
-            string scenarioXMLPath = Path.Combine(scenarioDirectory, scenarioName + ".xml");
+            string scenarioBinPath = Path.Combine(binDirectory, scenarioName + ".bin");
+            string scenarioXMLPath = Path.Combine(xmlDirectory, scenarioName + ".xml");
 
             ProcessStartInfo startInfo = new ProcessStartInfo()
             {
@@ -79,6 +79,7 @@ namespace UURageAssetIntegration
 
         static void DoStep(string scenarioID, JArray state)
         {
+            // Call to the allfirsts service of the ScenarioReasoner
             JArray nextSteps = (JArray)PerformReasonerRequest("scenarios.allfirsts", new JArray((object)state));
             if (nextSteps.Count == 0)
             {

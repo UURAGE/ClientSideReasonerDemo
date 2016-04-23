@@ -1,9 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2013
-VisualStudioVersion = 12.0.31101.0
+# Visual Studio 14
+VisualStudioVersion = 14.0.25123.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UURageAssetIntegration", "UURageAssetIntegration\UURageAssetIntegration.csproj", "{30053F17-B639-4454-BB6D-A41F34E2B8E9}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ClientSideReasonerDemo", "ClientSideReasonerDemo\ClientSideReasonerDemo.csproj", "{30053F17-B639-4454-BB6D-A41F34E2B8E9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
