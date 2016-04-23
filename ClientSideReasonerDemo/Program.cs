@@ -1,11 +1,8 @@
 ﻿using System;
 using System.Configuration;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using System.Web;
 using Newtonsoft.Json.Linq;
 
@@ -132,10 +129,11 @@ namespace UURAGE
                     Console.WriteLine(HttpUtility.HtmlDecode(nextText));
                     optionCounter++;
                 }
+
                 /* If there are multiple computer statements, i.e. more options for the counter, we randomly select one; 
-                    * else we select the only option available.
-                    * This section will be the integration part with INESC emotion detection asset
-                    */ 
+                 * else we select the only option available.
+                 * This section will be the integration part with INESC emotion detection asset
+                 */ 
                 if (optionCounter > 1)
                 {
                     Random rnd = new Random();
@@ -153,40 +151,39 @@ namespace UURAGE
 
         static void Main(string[] args)
         {
+            // Provides support for unicode characters
             Console.InputEncoding = Encoding.Unicode;
             Console.OutputEncoding = Encoding.Unicode;
 
+            // The unique identifier for the scenario obtained after parsing the scenario
             string scenarioID = "";
+            // The initial scenario XML filename
             string scenarioName = "";
             bool loaded = false;
             
-            if (args.Length == 0)
-            {
-                Console.WriteLine("Please specify the name of the scenario");
-                scenarioName = Console.ReadLine();
-                Console.WriteLine();
+            Console.WriteLine("Please specify the name of the scenario XML without the .xml extension");
+            scenarioName = Console.ReadLine();
+            Console.WriteLine();
 
-                Console.WriteLine("Loading scenario...");
-                string output = PerformParserRequest(scenarioName);
-                loaded = output.Contains(".bin");
+            Console.WriteLine("Loading scenario...");
+            string output = PerformParserRequest(scenarioName);
+            // Check if the parsing succeeded
+            loaded = output.Contains(".bin");
+            
+            if (loaded)
+            {
+                // Get the start and end indices for the scenarioID
                 int idStartIndex = output.IndexOf("bins\\") + 5;
                 int idEndIndex = output.IndexOf(".bin");
+                // Extract the scenarioID from the output
+                scenarioID = output.Substring(idStartIndex, idEndIndex - idStartIndex);
 
-
-                if (loaded)
-                {
-                    scenarioID = output.Substring(idStartIndex, idEndIndex - idStartIndex);
-                    Console.WriteLine("Scenario successfully loaded");
-                }
-                else
-                    Console.WriteLine("Failed to load scenario");
-
-                Console.WriteLine();
+                Console.WriteLine("Scenario successfully loaded");
             }
             else
-            {
-                Console.WriteLine("put the command line code in here");
-            }
+                Console.WriteLine("Failed to load scenario");
+
+            Console.WriteLine();
 
             if (loaded)
             {
@@ -204,9 +201,12 @@ namespace UURAGE
                     {
                         // Call to the allfirsts service of the ScenarioReasoner
                         JArray nextSteps = (JArray)PerformReasonerRequest("scenarios.allfirsts", new JArray((object)nextState));
-                        if (nextSteps.Count == 0)
+
+                        // Check if this statement ends the scenario or if there aren't any options left
+                        bool endOfScenario = (bool)((JValue)(((JObject)JObject.Parse(((JValue)nextState[2]).Value.ToString())["statement"])["end"])).Value;
+                        if (endOfScenario || nextSteps.Count == 0)
                         {
-                            Console.WriteLine("Scenario ended!");
+                            Console.WriteLine("End of the scenario!");
                             break;
                         }
                         else
@@ -217,6 +217,7 @@ namespace UURAGE
                 }
             }
 
+            Console.WriteLine();
             Console.WriteLine("Press any key to close this console...");
             Console.ReadLine();
         }
