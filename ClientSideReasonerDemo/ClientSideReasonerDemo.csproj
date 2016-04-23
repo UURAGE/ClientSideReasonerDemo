@@ -7,8 +7,8 @@
     <ProjectGuid>{30053F17-B639-4454-BB6D-A41F34E2B8E9}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>UURageAssetIntegration</RootNamespace>
-    <AssemblyName>UURageAssetIntegration</AssemblyName>
+    <RootNamespace>UURAGE</RootNamespace>
+    <AssemblyName>ClientSideReasonerDemo</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -40,6 +40,7 @@
     <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
     <Reference Include="System.Web" />
+    <Reference Include="System.Web.Extensions" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
