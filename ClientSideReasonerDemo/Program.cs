@@ -121,7 +121,6 @@ namespace UURAGE
                     JArray nextState = (JArray)((JArray)nextStep)[3];
                     string nextDetails = ((JValue)nextState[2]).Value.ToString();
                     string nextText = ((JValue)(((JObject)JObject.Parse(nextDetails)["statement"])["text"])).Value.ToString();
-                    bool endOfScenario = (bool)((JValue)(((JObject)JObject.Parse(nextDetails)["statement"])["end"])).Value;
                     Console.WriteLine(optionCounter.ToString() + ". " + HttpUtility.HtmlDecode(nextText));
                     optionCounter++;
                 }
@@ -213,11 +212,8 @@ namespace UURAGE
                     // Call to the allfirsts service of the ScenarioReasoner
                     JArray nextSteps = (JArray)PerformReasonerRequest("scenarios.allfirsts", new JArray((object)nextState));
 
-                    // Check if this statement ends the scenario or if there aren't any options left
-                    JToken statementInfo = JObject.Parse(((JValue)nextState[2]).Value.ToString())["statement"];
-                    bool endOfScenario = statementInfo.Type == JTokenType.Null ?
-                        false : (bool)((JValue)(((JObject)statementInfo)["end"])).Value;
-                    if (endOfScenario || nextSteps.Count == 0)
+                    // Check if there aren't any options left
+                    if (nextSteps.Count == 0)
                     {
                         Console.WriteLine("End of the scenario!");
                         break;
