@@ -203,7 +203,9 @@ namespace UURAGE
                         JArray nextSteps = (JArray)PerformReasonerRequest("scenarios.allfirsts", new JArray((object)nextState));
 
                         // Check if this statement ends the scenario or if there aren't any options left
-                        bool endOfScenario = (bool)((JValue)(((JObject)JObject.Parse(((JValue)nextState[2]).Value.ToString())["statement"])["end"])).Value;
+                        JToken statementInfo = JObject.Parse(((JValue)nextState[2]).Value.ToString())["statement"];
+                        bool endOfScenario = statementInfo.Type == JTokenType.Null ?
+                            false : (bool)((JValue)(((JObject)statementInfo)["end"])).Value;
                         if (endOfScenario || nextSteps.Count == 0)
                         {
                             Console.WriteLine("End of the scenario!");
