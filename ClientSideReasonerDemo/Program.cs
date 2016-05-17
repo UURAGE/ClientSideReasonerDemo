@@ -30,6 +30,7 @@ namespace UURAGE
                 FileName = Path.Combine(cgiDirectory, scenarioReasonerFileName),
                 WorkingDirectory = cgiDirectory,
                 RedirectStandardOutput = true,
+                RedirectStandardError = true,
                 UseShellExecute = false
             };
             string input = Uri.EscapeDataString(param.ToString());
@@ -37,6 +38,7 @@ namespace UURAGE
             startInfo.EnvironmentVariables.Add("QUERY_STRING", "input=" + input);
             using (Process srProcess = Process.Start(startInfo))
             {
+                srProcess.WaitForExit();
                 string output = new StreamReader(srProcess.StandardOutput.BaseStream).ReadToEnd();
                 JObject response = JObject.Parse(output.Split(new string[] { "\r\n\r\n" }, 2, StringSplitOptions.None)[1]);
                 if (response["error"].Type != JTokenType.Null)
@@ -58,6 +60,7 @@ namespace UURAGE
                 FileName = Path.Combine(cgiDirectory, scenarioParserFileName),
                 WorkingDirectory = cgiDirectory,
                 RedirectStandardOutput = true,
+                RedirectStandardError = true,
                 UseShellExecute = false                
             };
 
@@ -68,6 +71,7 @@ namespace UURAGE
 
             using (Process spProcess = Process.Start(startInfo))
             {
+                spProcess.WaitForExit();
                 string output = new StreamReader(spProcess.StandardOutput.BaseStream).ReadToEnd();
 
                 return output;
@@ -221,7 +225,7 @@ namespace UURAGE
 
             Console.WriteLine();
             Console.WriteLine("Press any key to close this console...");
-            Console.ReadLine();
+            Console.ReadKey();
         }
     }
 }
