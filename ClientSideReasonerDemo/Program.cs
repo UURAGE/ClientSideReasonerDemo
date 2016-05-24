@@ -149,8 +149,8 @@ namespace UURAGE
         static void Main(string[] args)
         {
             // Provides support for unicode characters
-            Console.InputEncoding = Encoding.Unicode;
-            Console.OutputEncoding = Encoding.Unicode;
+            Console.InputEncoding = Encoding.UTF8;
+            Console.OutputEncoding = Encoding.UTF8;
 
             // The unique identifier for the scenario obtained after parsing the scenario
             string scenarioID = "";
