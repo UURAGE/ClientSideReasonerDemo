@@ -18,6 +18,13 @@ namespace UURAGE
         static readonly string cgiDirectory = ConfigurationManager.AppSettings["cgi_directory"];
         // Relative to the cgi directory
         static readonly string xmlDirectory = ConfigurationManager.AppSettings["xml_directory"];
+        
+        static string QuoteProcessArgument(string argument)
+        {
+            // documented at
+            // https://msdn.microsoft.com/en-us/library/system.diagnostics.processstartinfo.arguments.aspx
+            return "\"" + argument.Replace("\"", "\"\"\"") + "\"";
+        }
 
         static JToken PerformReasonerRequest(string method, JArray parameters)
         {
@@ -51,7 +58,7 @@ namespace UURAGE
             }
         }
 
-        static string PerformParserRequest(string scenarioName)
+        static string ParseScenario(string scenarioName)
         {
             // This directory is relative to the cgi
             string scenarioBinPath = Path.Combine(binDirectory, scenarioName + ".bin");
@@ -65,20 +72,23 @@ namespace UURAGE
                 RedirectStandardError = true,
                 StandardOutputEncoding = Encoding.UTF8,
                 StandardErrorEncoding = Encoding.UTF8,
-                UseShellExecute = false                
+                UseShellExecute = false
             };
 
-            startInfo.EnvironmentVariables.Add("REQUEST_METHOD", "GET");
-
-            string query = "script_path=" + Uri.EscapeDataString(scenarioXMLPath) + "&" + "bin_path=" + Uri.EscapeDataString(scenarioBinPath);
-            startInfo.EnvironmentVariables.Add("QUERY_STRING", query);
+            startInfo.Arguments = string.Join(" ", "-r",
+                QuoteProcessArgument(scenarioXMLPath), QuoteProcessArgument(scenarioBinPath));
 
             using (Process spProcess = Process.Start(startInfo))
             {
                 spProcess.WaitForExit();
-                string output = spProcess.StandardOutput.ReadToEnd();
-
-                return output;
+                if (spProcess.ExitCode == 0)
+                {
+                    return spProcess.StandardOutput.ReadLine();
+                }
+                else
+                {
+                    throw new InvalidOperationException(spProcess.StandardError.ReadToEnd());
+                }
             }
         }
 
@@ -152,70 +162,54 @@ namespace UURAGE
 
         static void Main(string[] args)
         {
-            // Provides support for unicode characters
-            Console.InputEncoding = Encoding.UTF8;
-            Console.OutputEncoding = Encoding.UTF8;
-
-            // The unique identifier for the scenario obtained after parsing the scenario
-            string scenarioID = "";
-            // The initial scenario XML filename
-            string scenarioName = "";
-            bool loaded = false;
+            // Provide support for Unicode characters
+            // If the input encoding is already UTF-8, the Console is probably set up correctly.
+            // If not, we need to set a Unicode-covering encoding.
+            // Windows appears to prefer Encoding.Unicode.
+            if (Console.InputEncoding.WebName != Encoding.UTF8.WebName)
+            {
+                Console.InputEncoding = Encoding.Unicode;
+                Console.OutputEncoding = Encoding.Unicode;
+            }
             
             Console.WriteLine("Please specify the name of the scenario XML without the .xml extension");
-            scenarioName = Console.ReadLine();
+            // The initial scenario XML filename
+            string scenarioName = Console.ReadLine();
             Console.WriteLine();
 
             Console.WriteLine("Loading scenario...");
-            string output = PerformParserRequest(scenarioName);
-            // Check if the parsing succeeded
-            loaded = output.Contains(".bin");
+            // The unique identifier for the scenario obtained after parsing the scenario
+            string scenarioID = ParseScenario(scenarioName);
+            Console.WriteLine("Scenario successfully loaded");
+            Console.WriteLine();
             
-            if (loaded)
-            {
-                // Get the start and end indices for the scenarioID
-                int idStartIndex = output.IndexOf("bins\\") + 5;
-                int idEndIndex = output.IndexOf(".bin");
-                // Extract the scenarioID from the output
-                scenarioID = output.Substring(idStartIndex, idEndIndex - idStartIndex);
-
-                Console.WriteLine("Scenario successfully loaded");
-            }
-            else
-                Console.WriteLine("Failed to load scenario");
-
+            Console.WriteLine("Do you want to play through the scenario? (yes/no)");
+            string answer = Console.ReadLine();
             Console.WriteLine();
 
-            if (loaded)
+            if (answer == "Yes" || answer == "Y" || answer == "yes" || answer == "y")
             {
-                Console.WriteLine("Do you want to play through the scenario? (yes/no)");
-                string answer = Console.ReadLine();
-                Console.WriteLine();
+                JArray paramsID = new JArray((object)new JArray(scenarioID));
+                string initialDetails = ((JValue)((JArray)PerformReasonerRequest("examples", paramsID)[0])[1]).Value.ToString();
+                JArray nextState = new JArray(scenarioID, (new JArray()).ToString(), initialDetails, new JObject());
 
-                if (answer == "Yes" || answer == "Y" || answer == "yes" || answer == "y")
+                while (true)
                 {
-                    JArray paramsID = new JArray((object)new JArray(scenarioID));
-                    string initialDetails = ((JValue)((JArray)PerformReasonerRequest("examples", paramsID)[0])[1]).Value.ToString();
-                    JArray nextState = new JArray(scenarioID, (new JArray()).ToString(), initialDetails, new JObject());
+                    // Call to the allfirsts service of the ScenarioReasoner
+                    JArray nextSteps = (JArray)PerformReasonerRequest("scenarios.allfirsts", new JArray((object)nextState));
 
-                    while (true)
+                    // Check if this statement ends the scenario or if there aren't any options left
+                    JToken statementInfo = JObject.Parse(((JValue)nextState[2]).Value.ToString())["statement"];
+                    bool endOfScenario = statementInfo.Type == JTokenType.Null ?
+                        false : (bool)((JValue)(((JObject)statementInfo)["end"])).Value;
+                    if (endOfScenario || nextSteps.Count == 0)
                     {
-                        // Call to the allfirsts service of the ScenarioReasoner
-                        JArray nextSteps = (JArray)PerformReasonerRequest("scenarios.allfirsts", new JArray((object)nextState));
-
-                        // Check if this statement ends the scenario or if there aren't any options left
-                        JToken statementInfo = JObject.Parse(((JValue)nextState[2]).Value.ToString())["statement"];
-                        bool endOfScenario = statementInfo.Type == JTokenType.Null ?
-                            false : (bool)((JValue)(((JObject)statementInfo)["end"])).Value;
-                        if (endOfScenario || nextSteps.Count == 0)
-                        {
-                            Console.WriteLine("End of the scenario!");
-                            break;
-                        }
-                        else
-                        {
-                            nextState = DoStep(scenarioID, nextSteps);
-                        }
+                        Console.WriteLine("End of the scenario!");
+                        break;
+                    }
+                    else
+                    {
+                        nextState = DoStep(scenarioID, nextSteps);
                     }
                 }
             }
