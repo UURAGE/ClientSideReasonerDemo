@@ -31,6 +31,8 @@ namespace UURAGE
                 WorkingDirectory = cgiDirectory,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
+                StandardOutputEncoding = Encoding.UTF8,
+                StandardErrorEncoding = Encoding.UTF8,
                 UseShellExecute = false
             };
             string input = Uri.EscapeDataString(param.ToString());
@@ -39,7 +41,7 @@ namespace UURAGE
             using (Process srProcess = Process.Start(startInfo))
             {
                 srProcess.WaitForExit();
-                string output = new StreamReader(srProcess.StandardOutput.BaseStream).ReadToEnd();
+                string output = srProcess.StandardOutput.ReadToEnd();
                 JObject response = JObject.Parse(output.Split(new string[] { "\r\n\r\n" }, 2, StringSplitOptions.None)[1]);
                 if (response["error"].Type != JTokenType.Null)
                 {
@@ -61,6 +63,8 @@ namespace UURAGE
                 WorkingDirectory = cgiDirectory,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
+                StandardOutputEncoding = Encoding.UTF8,
+                StandardErrorEncoding = Encoding.UTF8,
                 UseShellExecute = false                
             };
 
@@ -72,7 +76,7 @@ namespace UURAGE
             using (Process spProcess = Process.Start(startInfo))
             {
                 spProcess.WaitForExit();
-                string output = new StreamReader(spProcess.StandardOutput.BaseStream).ReadToEnd();
+                string output = spProcess.StandardOutput.ReadToEnd();
 
                 return output;
             }
