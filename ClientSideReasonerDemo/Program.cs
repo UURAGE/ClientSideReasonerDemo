@@ -19,6 +19,8 @@ namespace UURAGE
         // Relative to the cgi directory
         static readonly string xmlDirectory = ConfigurationManager.AppSettings["xml_directory"];
         
+        static readonly Encoding utf8EncodingWithoutBOM = new UTF8Encoding(false);
+
         static string QuoteProcessArgument(string argument)
         {
             // documented at
@@ -36,20 +38,33 @@ namespace UURAGE
             {
                 FileName = Path.Combine(cgiDirectory, scenarioReasonerFileName),
                 WorkingDirectory = cgiDirectory,
+                RedirectStandardInput = true,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
-                StandardOutputEncoding = Encoding.UTF8,
-                StandardErrorEncoding = Encoding.UTF8,
-                UseShellExecute = false
+                StandardOutputEncoding = utf8EncodingWithoutBOM,
+                StandardErrorEncoding = utf8EncodingWithoutBOM,
+                UseShellExecute = false,
+                Arguments = "-r"
             };
-            string input = Uri.EscapeDataString(param.ToString());
-            startInfo.EnvironmentVariables.Add("REQUEST_METHOD", "GET");
-            startInfo.EnvironmentVariables.Add("QUERY_STRING", "input=" + input);
+
+            // Unfortunately, there is no StandardInputEncoding setting; the encoding for the
+            // standard input stream is always taken from Console.InputEncoding in Process.Start.
+            // We need to set that to the proper encoding (UTF8 *without* BOM) to ensure no BOM is
+            // output, then reset it after starting the process.
+            Encoding consoleInputEncoding = Console.InputEncoding;
+            Console.InputEncoding = utf8EncodingWithoutBOM;
             using (Process srProcess = Process.Start(startInfo))
             {
+                Console.InputEncoding = consoleInputEncoding;
+                srProcess.StandardInput.WriteLine(param.ToString());
+                srProcess.StandardInput.Close();
                 srProcess.WaitForExit();
+                if (srProcess.ExitCode != 0)
+                {
+                    throw new InvalidOperationException(srProcess.StandardError.ReadToEnd());
+                }
                 string output = srProcess.StandardOutput.ReadToEnd();
-                JObject response = JObject.Parse(output.Split(new string[] { "\r\n\r\n" }, 2, StringSplitOptions.None)[1]);
+                JObject response = JObject.Parse(output);
                 if (response["error"].Type != JTokenType.Null)
                 {
                     throw new InvalidOperationException(((JValue)response["error"]).Value.ToString());
@@ -70,8 +85,8 @@ namespace UURAGE
                 WorkingDirectory = cgiDirectory,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
-                StandardOutputEncoding = Encoding.UTF8,
-                StandardErrorEncoding = Encoding.UTF8,
+                StandardOutputEncoding = utf8EncodingWithoutBOM,
+                StandardErrorEncoding = utf8EncodingWithoutBOM,
                 UseShellExecute = false
             };
 
