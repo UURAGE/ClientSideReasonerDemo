@@ -32,7 +32,8 @@ namespace UURAGE
         {
             JObject param = new JObject(
                 new JProperty("method", method),
-                new JProperty("params", parameters)
+                new JProperty("params", parameters),
+                new JProperty("encoding", "json")
             );
             ProcessStartInfo startInfo = new ProcessStartInfo()
             {
@@ -110,8 +111,8 @@ namespace UURAGE
 
         static JArray DoStep(string scenarioID, JArray nextSteps)
         {
-            string firstNextDetails = ((JValue)((JArray)((JArray)nextSteps[0])[3])[2]).Value.ToString();
-            string firstNextType = ((JValue)(((JObject)JObject.Parse(firstNextDetails)["statement"])["type"])).Value.ToString();
+            JObject firstNextDetails = (JObject)((JArray)((JArray)nextSteps[0])[3])[2];
+            string firstNextType = ((JValue)(((JObject)firstNextDetails["statement"])["type"])).Value.ToString();
             if (firstNextType == "player")
             {
                 Console.WriteLine("Choose the step that you want to take by giving the appropriate number");
@@ -120,8 +121,8 @@ namespace UURAGE
                 foreach (JToken nextStep in nextSteps)
                 {
                     JArray nextState = (JArray)((JArray)nextStep)[3];
-                    string nextDetails = ((JValue)nextState[2]).Value.ToString();
-                    string nextText = ((JValue)(((JObject)JObject.Parse(nextDetails)["statement"])["text"])).Value.ToString();
+                    JObject nextDetails = (JObject)(nextState[2]);
+                    string nextText = ((JValue)((nextDetails["statement"])["text"])).Value.ToString();
                     Console.WriteLine(optionCounter.ToString() + ". " + HttpUtility.HtmlDecode(nextText));
                     optionCounter++;
                 }
@@ -151,8 +152,8 @@ namespace UURAGE
                 foreach (JToken nextStep in nextSteps)
                 {
                     JArray nextState = (JArray)((JArray)nextStep)[3];
-                    string nextDetails = ((JValue)nextState[2]).Value.ToString();
-                    string nextText = ((JValue)(((JObject)JObject.Parse(nextDetails)["statement"])["text"])).Value.ToString();
+                    JObject nextDetails = (JObject)nextState[2];
+                    string nextText = ((JValue)(((JObject)nextDetails["statement"])["text"])).Value.ToString();
                     Console.WriteLine(HttpUtility.HtmlDecode(nextText));
                 }
 
@@ -205,7 +206,7 @@ namespace UURAGE
             if (answer == "Yes" || answer == "Y" || answer == "yes" || answer == "y")
             {
                 JArray paramsID = new JArray((object)new JArray(scenarioID));
-                string initialDetails = ((JValue)((JArray)PerformReasonerRequest("examples", paramsID)[0])[1]).Value.ToString();
+                JObject initialDetails = (JObject)((JArray)PerformReasonerRequest("examples", paramsID)[0])[1];
                 JArray nextState = new JArray(scenarioID, (new JArray()).ToString(), initialDetails, new JObject());
 
                 while (true)
