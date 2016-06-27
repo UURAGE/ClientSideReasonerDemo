@@ -3,7 +3,6 @@ using System.Configuration;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
-using System.Web;
 using Newtonsoft.Json.Linq;
 
 namespace UURAGE
@@ -123,7 +122,7 @@ namespace UURAGE
                     JArray nextState = (JArray)((JArray)nextStep)[3];
                     JObject nextDetails = (JObject)(nextState[2]);
                     string nextText = ((JValue)((nextDetails["statement"])["text"])).Value.ToString();
-                    Console.WriteLine(optionCounter.ToString() + ". " + HttpUtility.HtmlDecode(nextText));
+                    Console.WriteLine(optionCounter.ToString() + ". " + nextText);
                     optionCounter++;
                 }
 
@@ -154,7 +153,7 @@ namespace UURAGE
                     JArray nextState = (JArray)((JArray)nextStep)[3];
                     JObject nextDetails = (JObject)nextState[2];
                     string nextText = ((JValue)(((JObject)nextDetails["statement"])["text"])).Value.ToString();
-                    Console.WriteLine(HttpUtility.HtmlDecode(nextText));
+                    Console.WriteLine(nextText);
                 }
 
                 /* If there are multiple computer statements, i.e. more options for the counter, we randomly select one; 
