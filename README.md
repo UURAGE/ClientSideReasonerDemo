@@ -5,7 +5,7 @@ The UURAGE Client-side Reasoner Demo is a C# application for playing scenarios o
 ## Prerequisites
 
 * Visual Studio 2015
-* A scenario XML created by the [Scenario Editor](https://github.com/UURAGE/ScenarioEditor)
+* A scenario XML created by the [Scenario Editor](https://github.com/UURAGE/ScenarioEditor) or according to the [UUDSL](http://uudsl.github.io/scenario/namespace)
 * A compatible release of the [Scenario Reasoner](https://github.com/UURAGE/ScenarioReasoner)
 
 ## Usage
