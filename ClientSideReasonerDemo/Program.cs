@@ -211,7 +211,7 @@ namespace UURAGE
                 while (true)
                 {
                     // Call to the allfirsts service of the ScenarioReasoner
-                    JArray nextSteps = (JArray)PerformReasonerRequest("scenarios.allfirsts", new JArray((object)nextState));
+                    JArray nextSteps = (JArray)PerformReasonerRequest("allfirsts", new JArray((object)nextState));
 
                     // Check if there aren't any options left
                     if (nextSteps.Count == 0)
