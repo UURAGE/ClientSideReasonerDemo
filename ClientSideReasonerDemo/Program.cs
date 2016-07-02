@@ -58,12 +58,12 @@ namespace UURAGE
                 Console.InputEncoding = consoleInputEncoding;
                 srProcess.StandardInput.WriteLine(param.ToString());
                 srProcess.StandardInput.Close();
+                string output = srProcess.StandardOutput.ReadToEnd();
                 srProcess.WaitForExit();
                 if (srProcess.ExitCode != 0)
                 {
                     throw new InvalidOperationException(srProcess.StandardError.ReadToEnd());
                 }
-                string output = srProcess.StandardOutput.ReadToEnd();
                 JObject response = JObject.Parse(output);
                 if (response["error"].Type != JTokenType.Null)
                 {
@@ -95,10 +95,11 @@ namespace UURAGE
 
             using (Process spProcess = Process.Start(startInfo))
             {
+                string output = spProcess.StandardOutput.ReadLine();
                 spProcess.WaitForExit();
                 if (spProcess.ExitCode == 0)
                 {
-                    return spProcess.StandardOutput.ReadLine();
+                    return output;
                 }
                 else
                 {
