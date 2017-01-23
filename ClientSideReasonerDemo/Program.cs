@@ -10,7 +10,7 @@ namespace UURAGE
     class Program
     {        
         static readonly string scenarioReasonerFileName = "ScenarioReasoner.cgi";
-        static readonly string scenarioParserFileName = "ScenarioParser.cgi";
+        static readonly string scenarioParserFileName = "ScenarioParser";
         static readonly string binDirectory = "bins";
 
         // Relative to the .exe in bin
